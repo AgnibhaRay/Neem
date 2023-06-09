@@ -2,6 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
+      <module fileurl="file://$PROJECT_DIR$/NeemLang/NeemLang.iml" filepath="$PROJECT_DIR$/NeemLang/NeemLang.iml" />
       <module fileurl="file://$PROJECT_DIR$/.idea/neem.iml" filepath="$PROJECT_DIR$/.idea/neem.iml" />
     </modules>
   </component>
