@@ -75,10 +75,35 @@ public class Scanner extends Neem{
             default:
             if (isDigit(c)) {
                 number();
-            } else {
+            }
+            else if (isChar(c)){
+                charecter();
+            }
+            else {
                 Neem.error(line, "Unexpected character.");
             }
         }
+    }
+
+    private boolean isChar(char c) {
+        if(c>=65 && c<=90 || c>=97 && c<=122){ return true;}
+        else
+            return false;
+    }
+
+    private void charecter() {
+        while (isChar(peek())) advance();
+
+        // Look for a fractional part.
+        if (peek() == '\'' && isChar(peekNext())) {
+            // Consume the "."
+            advance();
+
+            while (isChar(peek())) advance();
+        }
+
+        addToken(TokenTypes.TokenType.CHARACTER,
+                source.substring(start, current));
     }
 
     private boolean isDigit(char c) {
