@@ -1,7 +1,5 @@
 import java.util.*;
 
-import static sun.nio.ch.IOStatus.EOF;
-
 public class Scanner extends Neem{
     private final String source;
     private final List<Token> tokens = new ArrayList<>();
@@ -42,10 +40,94 @@ public class Scanner extends Neem{
             case '+': addToken(TokenTypes.TokenType.PLUS); break;
             case ';': addToken(TokenTypes.TokenType.SEMICOLON); break;
             case '*': addToken(TokenTypes.TokenType.STAR); break;
-            default:
-                Neem.error(line, "Unexpected character.");
+            case '!':
+                addToken(match('=') ? TokenTypes.TokenType.BANG_EQUAL : TokenTypes.TokenType.BANG);
                 break;
+            case '=':
+                addToken(match('=') ? TokenTypes.TokenType.EQUAL_EQUAL : TokenTypes.TokenType.EQUAL);
+                break;
+            case '<':
+                addToken(match('=') ? TokenTypes.TokenType.LESS_EQUAL : TokenTypes.TokenType.LESS);
+                break;
+            case '>':
+                addToken(match('=') ? TokenTypes.TokenType.GREATER_EQUAL : TokenTypes.TokenType.GREATER);
+                break;
+            case '/':
+                if (match('/')) {
+                    // A comment goes until the end of the line.
+                    while (peek() != '\n' && !isAtEnd()) advance();
+                } else {
+                    addToken(TokenTypes.TokenType.SLASH);
+                }
+                break;
+            case ' ':
+            case '\r':
+            case '\t':
+                // Ignore whitespace.
+                break;
+
+            case '\n':
+                line++;
+                break;
+
+            case '"': string(); break;
+
+            default:
+            if (isDigit(c)) {
+                number();
+            } else {
+                Neem.error(line, "Unexpected character.");
+            }
         }
+    }
+
+    private boolean isDigit(char c) {
+        return c >= '0' && c <= '9';
+    }
+
+    private void number() {
+        while (isDigit(peek())) advance();
+
+        // Look for a fractional part.
+        if (peek() == '.' && isDigit(peekNext())) {
+            // Consume the "."
+            advance();
+
+            while (isDigit(peek())) advance();
+        }
+
+        addToken(TokenTypes.TokenType.NUMBER,
+                Double.parseDouble(source.substring(start, current)));
+    }
+
+    private char peekNext() {
+        if (current + 1 >= source.length()) return '\0';
+        return source.charAt(current + 1);
+    }
+
+    private void string() {
+        while (peek() != '"' && !isAtEnd()) {
+            if (peek() == '\n') line++;
+            advance();
+        }
+
+        // Unterminated string.
+        if (isAtEnd()) {
+            Neem.error(line, "Unterminated string.");
+            return;
+        }
+
+        // The closing ".
+        advance();
+
+        // Trim the surrounding quotes.
+        String value = source.substring(start + 1, current - 1);
+        addToken(TokenTypes.TokenType.STRING, value);
+    }
+
+    private char peek() {
+        if (isAtEnd()) return '\0';
+        return source.charAt(current);
     }
 
     private char advance() {
@@ -59,5 +141,12 @@ public class Scanner extends Neem{
     private void addToken(TokenTypes.TokenType type, Object literal) {
         String text = source.substring(start, current);
         tokens.add(new Token(type, text, literal, line));
+    }
+
+    private boolean match(char expected) {
+        if (isAtEnd()) return false;
+        if (source.charAt(current) != expected) return false;
+        current++;
+        return true;
     }
 }
